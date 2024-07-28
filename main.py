@@ -1,5 +1,5 @@
 from datetime import date
-from flask import Flask, abort, render_template, redirect, url_for, flash
+from flask import Flask, abort, render_template, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 import os
 from dotenv import load_dotenv
+import smtplib
 
 load_dotenv(".env")
 year = date.today().year
@@ -234,9 +235,19 @@ def about():
     return render_template("about.html", year=year)
 
 
-@app.route("/contact")
+@app.route("/contact", methods=['GET', 'POST'])
 def contact():
-    return render_template("contact.html", year=year)
+    if request.method == 'GET':
+        return render_template("contact.html", year=year, header='Contact Me')
+    if request.method == 'POST':
+        with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+            connection.starttls()
+            connection.login(user=os.getenv("EMAIL"), password=os.getenv("PASSWORD"))
+            connection.sendmail(from_addr=os.getenv("EMAIL"),
+                                to_addrs=os.getenv("EMAIL"),
+                                msg=f"Subject:New Message \n\nName: {request.form['name']}\nEmail: {request.form['email']}\n"
+                                    f"Phone: {request.form['phone']}\nMessage: {request.form['message']}")
+        return render_template("contact.html", year=year, header='Successfully sent your message')
 
 
 if __name__ == "__main__":
