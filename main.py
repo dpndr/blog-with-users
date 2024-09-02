@@ -1,5 +1,5 @@
-from datetime import date
-from flask import Flask, abort, render_template, redirect, url_for, flash, request
+from datetime import date, timedelta
+from flask import Flask, abort, render_template, redirect, url_for, flash, request, session
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
@@ -96,9 +96,28 @@ def admin_only(fn):
     return decorated_fn
 
 
+def author_only(fn):
+    @wraps(fn)
+    def decorated_fn(*args, **kwargs):
+        author_id = int(kwargs.get("author_id"))
+        if current_user.id == author_id or current_user.id == 1:
+            return fn(*args, **kwargs)
+        else:
+            return abort(403)
+    return decorated_fn
+
+
 @login_manager.user_loader
 def load_user(user_id: str) -> User | None:
     return db.get_or_404(User, user_id)
+
+
+app.permanent_session_lifetime = timedelta(days=90)
+
+if session:
+    if "user_id" in session:
+        user = db.session.execute(db.select(User).where(User.id == session["user_id"]))
+        login_user(user)
 
 
 # TODO: Use Werkzeug to hash the user's password when creating a new user.
@@ -122,6 +141,11 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
+        if form.logged_in.data:
+            session.permanent = True
+            session["user_id"] = user.id
+        else:
+            session.permanent = False
         return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form, year=year)
 
@@ -139,6 +163,13 @@ def login():
             flash('Invalid password, please try again.')
         else:
             login_user(user)
+
+            if form.logged_in.data:
+                session.permanent = True
+                session["user_id"] = user.id
+            else:
+                session.permanent = False
+
             return redirect(url_for("get_all_posts"))
     return render_template("login.html", form=form, year=year)
 
@@ -146,6 +177,7 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
+    session.pop("user_id", None)
     return redirect(url_for('get_all_posts'))
 
 
@@ -230,6 +262,15 @@ def delete_post(post_id):
     return redirect(url_for('get_all_posts'))
 
 
+@app.route("/deleteComment/<post_id><comment_id><author_id>")
+@author_only
+def delete_comment(post_id, comment_id, author_id):
+    comment_to_delete = db.get_or_404(Comments, comment_id)
+    db.session.delete(comment_to_delete)
+    db.session.commit()
+    return redirect(url_for('show_post', post_id=post_id))
+
+
 @app.route("/about")
 def about():
     return render_template("about.html", year=year)
@@ -251,4 +292,4 @@ def contact():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
