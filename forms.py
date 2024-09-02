@@ -15,7 +15,7 @@ class CreatePostForm(FlaskForm):
 
 # TODO: Create a RegisterForm to register new users
 class RegisterForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(),
                                                                      EqualTo('password',
@@ -28,7 +28,7 @@ class RegisterForm(FlaskForm):
 
 # TODO: Create a LoginForm to login existing users
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     logged_in = BooleanField('Keep me logged in')
     submit = SubmitField('LET ME IN!')
