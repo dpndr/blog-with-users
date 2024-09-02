@@ -73,6 +73,7 @@ class User(db.Model, UserMixin):
 
 
 class Comments(db.Model):
+
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
