@@ -115,11 +115,6 @@ def load_user(user_id: str) -> User | None:
 
 app.permanent_session_lifetime = timedelta(days=90)
 
-if session:
-    if "user_id" in session:
-        user = db.session.execute(db.select(User).where(User.id == session["user_id"]))
-        login_user(user)
-
 
 # TODO: Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["POST", "GET"])
@@ -143,10 +138,9 @@ def register():
         db.session.commit()
         login_user(new_user)
         if form.logged_in.data:
-            session.permanent = True
-            session["user_id"] = user.id
+            login_user(user, remember=True)
         else:
-            session.permanent = False
+            login_user(user)
         return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form, year=year)
 
@@ -163,13 +157,11 @@ def login():
         elif not check_password_hash(user.password, form.password.data):
             flash('Invalid password, please try again.')
         else:
-            login_user(user)
 
             if form.logged_in.data:
-                session.permanent = True
-                session["user_id"] = user.id
+                login_user(user, remember=True)
             else:
-                session.permanent = False
+                login_user(user)
 
             return redirect(url_for("get_all_posts"))
     return render_template("login.html", form=form, year=year)
@@ -178,7 +170,7 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
-    session.pop("user_id", None)
+    # session.clear()
     return redirect(url_for('get_all_posts'))
 
 
@@ -302,4 +294,4 @@ def contact():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
