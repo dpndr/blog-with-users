@@ -40,7 +40,7 @@ class Base(DeclarativeBase):
     pass
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI", "sqlite:///posts.db")
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -113,14 +113,6 @@ def load_user(user_id: str) -> User | None:
     return db.get_or_404(User, user_id)
 
 
-app.permanent_session_lifetime = timedelta(days=90)
-
-if session:
-    if "user_id" in session:
-        user = db.session.execute(db.select(User).where(User.id == session["user_id"]))
-        login_user(user)
-
-
 # TODO: Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["POST", "GET"])
 def register():
@@ -163,13 +155,11 @@ def login():
         elif not check_password_hash(user.password, form.password.data):
             flash('Invalid password, please try again.')
         else:
-            login_user(user)
 
             if form.logged_in.data:
-                session.permanent = True
-                session["user_id"] = user.id
+                login_user(user, remember=True)
             else:
-                session.permanent = False
+                login_user(user)
 
             return redirect(url_for("get_all_posts"))
     return render_template("login.html", form=form, year=year)
@@ -205,7 +195,7 @@ def show_post(post_id):
         )
         db.session.add(new_comment)
         db.session.commit()
-        return redirect(url_for("show_post", post_id=requested_post.id))
+        return redirect(url_for("show_post", post_id=requested_post.id) + '#comment_form')
     return render_template("post.html", post=requested_post, current_user=current_user,
                            form=form, year=year)
 
@@ -263,13 +253,22 @@ def delete_post(post_id):
     return redirect(url_for('get_all_posts'))
 
 
-@app.route("/deleteComment/<post_id><comment_id><author_id>")
+@app.route("/deleteComment/<post_id>/<comment_id>/<author_id>")
 @author_only
 def delete_comment(post_id, comment_id, author_id):
     comment_to_delete = db.get_or_404(Comments, comment_id)
     db.session.delete(comment_to_delete)
     db.session.commit()
-    return redirect(url_for('show_post', post_id=post_id))
+    return redirect(url_for('show_post', post_id=post_id) + '#comment_form')
+
+
+# @app.route("/editComment/<post_id><comment_id><author_id>")
+# @author_only
+# def edit_comment(post_id, comment_id, author_id):
+#     comment_to_edit = db.get_or_404(Comments, comment_id)
+#
+#     db.session.commit()
+#     return redirect(url_for('show_post', post_id=post_id))
 
 
 @app.route("/about")
@@ -293,4 +292,4 @@ def contact():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

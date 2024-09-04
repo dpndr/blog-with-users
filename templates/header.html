@@ -38,6 +38,24 @@
       href="{{ url_for('static', filename='css/styles.css') }}"
       rel="stylesheet"
     />
+     <script>
+        window.onload = function() {
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+
+            if (window.location.hash) {
+                const element = document.querySelector(window.location.hash);
+                if (element) {
+                    // Instantly set the scroll position to the element's top offset
+                    window.scrollTo(0, element.offsetTop);
+                }
+            }
+
+            document.body.style.overflow = 'auto';
+        };
+    </script>
+
     {% endblock %}
   </head>
   <body>

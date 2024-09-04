@@ -37,9 +37,11 @@
         {% endif %}
         <!-- Comments Area -->
         <!-- TODO: Add a CKEditor for commenting below -->
-        {{ ckeditor.load() }}
-        {{ ckeditor.config(name="comment") }}
+<!--        {{ ckeditor.load() }}-->
+<!--        {{ ckeditor.config(name="comment") }}-->
+        <div id="comment_form">
         {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        </div>
 
         <div class="comment">
           <!-- TODO: Show all the comments on a post -->
