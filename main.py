@@ -133,11 +133,10 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user)
         if form.logged_in.data:
-            session.permanent = True
-            session["user_id"] = user.id
+            login_user(new_user, remember=True)
         else:
+            login_user(new_user)
             session.permanent = False
         return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form, year=year)
