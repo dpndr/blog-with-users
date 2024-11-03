@@ -14,7 +14,7 @@ import os
 from dotenv import load_dotenv
 import smtplib
 
-load_dotenv(".env")
+load_dotenv()
 year = date.today().year
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ class Base(DeclarativeBase):
     pass
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI", "sqlite:///posts.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URI")
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -133,11 +133,10 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user)
         if form.logged_in.data:
-            login_user(user, remember=True)
+            login_user(new_user, remember=True)
         else:
-            login_user(user)
+            login_user(new_user)
         return redirect(url_for('get_all_posts'))
     return render_template("register.html", form=form, year=year)
 
@@ -290,4 +289,4 @@ def contact():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0")
+    app.run(debug=False)
