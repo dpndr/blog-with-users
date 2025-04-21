@@ -23,15 +23,3 @@ This project focuses on user authentication, blog management, and a clean, minim
    git clone https://github.com/dpndr/blog-with-users.git
    cd blog-with-users
   ```
-
-## Folder Structure
-blog-with-users/
-│
-├── models/         # Mongoose models
-├── routes/         # Express routes
-├── views/          # EJS templates
-├── public/         # Static files (CSS, JS)
-├── app.js          # Main server file
-└── package.json    # Project metadata and dependencies
-
-
